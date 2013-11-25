@@ -1,6 +1,8 @@
 qcumber-data-validator
 ======================
 
+[![Build Status](https://travis-ci.org/queens-hacks/qcumber-data-validator.png?branch=master)](https://travis-ci.org/queens-hacks/qcumber-data-validator)
+
 Note: Work in progress, not live yet. The current live site code is at http://github.com/ChrisCooper/QcumberD
 
 
