@@ -1,0 +1,5 @@
+type: //rec
+required:
+  hello: //str
+optional:
+  world: //str
