@@ -13,3 +13,9 @@ $ qcumber-validator schema/validate-config.yml
 
 
 It's made with [qcumber-data](https://github.com/Queens-Hacks/qcumber-data) in mind.
+
+
+Install
+-------
+
+Install requires `pyyaml` and `pyrx`.

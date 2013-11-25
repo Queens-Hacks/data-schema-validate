@@ -1,6 +1,6 @@
 from setuptools import setup
 
-setup(name='Qcumber-Data-Validator',
+setup(name='rx-data-validate',
       version='0.0.1',
       author='Philip Schleihauf',
       author_email='uniphil@gmail.com',
