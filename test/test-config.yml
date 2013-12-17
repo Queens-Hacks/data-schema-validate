@@ -2,4 +2,4 @@ validate:
 
   - name: Schema Test
     schema: test/test-schema.yml
-    data: test/test-data.yml
+    data: test/test-data-*.yml

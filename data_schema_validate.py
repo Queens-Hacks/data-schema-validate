@@ -6,7 +6,6 @@
     blah blah blah
 """
 
-import sys
 import glob
 import yaml
 import pyrx
@@ -24,49 +23,74 @@ required:
         data: //str
 """
 
+
 rx = pyrx.Factory({"register_core_types": True})
 
 
-def naming_reader(fname, *args, **kwargs):
-    print " - {}... ".format(fname),
-    with open(fname, *args, **kwargs) as f:
-        return f.read()
+class ConfigError(ValueError):
+    """An invalid configuration was provided"""
+    def __init__(self, trace):
+        self.trace = trace
+
+    def __str__(self):
+        return '\n'.join(self.trace[:-1])
 
 
-def load(f):
-    config = yaml.load(f.read())
-    # meta-check (sanity)
-    print "Checking confing... ",
-    if not check(config_schema_yml, [config]):
-        print "Invalid config schema  :("
-        sys.exit(1)
+def check_config(config):
+    config_schema = yaml.load(config_schema_yml)
+    schema = rx.make_schema(config_schema, trace=True)
+    if not schema.check(config):
+        return schema.trace
+
+
+def load_data_files(filepathdef):
+    file_list = glob.glob(filepathdef)
+    for filename in file_list:
+        with open(filename) as data_file:
+            data = yaml.load(data_file)
+        yield filename, data
+
+
+def validate(config):
+    config_trace = check_config(config)
+    if config_trace is not None:
+        raise ConfigError(config_trace)
+
+    errors = 0
 
     for test in config['validate']:
-        print "Checking data for '{}' against {}:".format(test['name'], test['schema'])
-        with open(test['schema']) as f:
-            schema = f.read()
-            data_files = glob.glob(test['data'])
-            opened = (naming_reader(d) for d in data_files)
-            data = (yaml.load(d) for d in opened)
-            yield (schema, data)
+        print('Validating data for {} against {}'.format(
+              test['name'], test['schema']))
 
+        with open(test['schema']) as schema_file:
+            schema_def = yaml.load(schema_file)
+        schema = rx.make_schema(schema_def, trace=True)
 
-def check(schema, data):
-    schema = rx.make_schema(yaml.load(schema))
-    results = []
-    for datum in data:
-        result = schema.check(datum)
-        print "ok" if result is True else "FAIL"
-        results.append(result)
-    return all(results)
+        for filename, data in load_data_files(test['data']):
+            print('  - testing {}'.format(filename))
+            if not schema.check(data):
+                trace = schema.trace[:4]
+                print('   x  {}'.format(
+                      '\n   x  '.join(trace)))
+                errors += 1
+
+    return errors
 
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(description="Validate Data blah blah")
-    parser.add_argument('config', type=argparse.FileType('r'), metavar='config')
+    parser = argparse.ArgumentParser(description='Validate data with schemas')
+    parser.add_argument('config', metavar='config',
+                        type=argparse.FileType('r'))
     args = parser.parse_args()
-    if not all(check(schema, data) for schema, data in load(args.config)):
-        print "\nTests failed  :("
-        sys.exit(1)
-    print "\nTests passed  :)"
+    config = yaml.load(args.config)
+
+    try:
+        errors = validate(config)
+    except ConfigError:
+        raise SystemExit('ERROR: invalid configuration')
+
+    if errors > 0:
+        raise SystemExit('FAILED (errors={})'.format(errors))
+
+    print('\nTests passed  :)')
