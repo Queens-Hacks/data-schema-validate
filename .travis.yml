@@ -2,4 +2,4 @@ language: python
 python:
   - "2.7"
 install: python setup.py install
-script: ./data_schema_validate.py test/test-config.yml
+script: nosetests
